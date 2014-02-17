@@ -25,7 +25,7 @@ def computeMat(k=99, s0=100, r = 0.06, v=0.2, N=50, type="call", european=True):
 		elif type == "put":
 			vals[N-1, j] = max(0, k - s)
 		else:
-			vals[N, j] = k-s
+			vals[N-1, j] = k-s
 	for i in range(N-2, -1,-1):
 		for j in xrange(0,N):
 			s = s0*pow(u,j)*pow(d,i-j)
@@ -124,9 +124,29 @@ def plotDeltaVSVolatility(K=[99]):
 
 	plt.show()
 
+def testPutCallParity():
+	P = []
+	C = []
+	F = []
+	X = []
+	for k in xrange(50,150,5):
+		X.append(k)
+		P.append(computeMat(type="put",k=k)[0][0,0])
+		C.append(computeMat(type="call", k=k)[0][0,0])
+		F.append(computeMat(type="forward", k=k)[0][0,0])
+	plt.plot(X, P, label="put")
+	plt.plot(X, C, label="call")
+	plt.plot(X, F, label="forward")
+	plt.xlabel('strike')
+	plt.ylabel('option price')
+	plt.legend()
+	plt.show()
+
+
 # binomialConvergence()
 # plotPriceVSVolatility()
-plotDeltaVSVolatility(K=[50, 99, 120, 150])
+# plotDeltaVSVolatility(K=[50, 99, 120, 150])
+print testPutCallParity()
 
 # vals,s = computeMat(european=True, type="call")
 # print vals[0,0]
