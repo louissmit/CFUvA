@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 from blackscholes import BS
 
-#this is just a test, i will recommit this thing
-
 
 def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
 	dt = 1.0 / N
@@ -19,7 +17,7 @@ def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=Tr
 	S = np.zeros((N,N+1))
 
 	#initliaze vals
-	for j in xrange(0,N):
+	for j in xrange(0,N+1):
 		s = s0*pow(u,j)*pow(d,N-1-j)
 		#check option type- put or call
 		if type == "call":
@@ -46,6 +44,15 @@ def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=Tr
 
 	return vals, S
 
+def getPrice(**kwargs):
+	return computeMat(**kwargs)[0][0,0]
+
+def getDelta(**kwargs):
+	vals, S = computeMat(**kwargs)
+
+	delta_f = vals[1, 1] - vals[1,2]
+	delta_S = S[1, 1] - S[1,2]
+	return delta_f / delta_S
 
 def binomialConvergence():
 	X = []
@@ -55,22 +62,47 @@ def binomialConvergence():
 		vals, S = computeMat(N=i)
 		price = vals[0,0]
 
-		X.append(i)
-		Y.append(price)
-		# if i % 2 == 0:
-		# 	X.append(i)
-		# 	Y.append(price)
-		# else:
-		# 	Y2.append(price)
+		# X.append(i)
+		# Y.append(price)
+		if i % 2 == 0:
+			X.append(i)
+			Y.append(price)
+		else:
+			Y2.append(price)
 	# pickle.dump(Y, open( "prices", "wb" ))
 
-	# plt.plot(X, Y, label="even")
-	plt.plot(X, Y, label="binomial tree")
-	# plt.plot(X, Y2, label="odd")
+	plt.plot(X, Y, label="even")
+	# plt.plot(X, Y, label="binomial tree")
+	plt.plot(X, Y2, label="odd")
 	plt.xlabel('N')
 	plt.ylabel('call option price in euro')
 	plt.plot(X, [BS()[0] for x in X], label="Black-Scholes")
 	plt.legend(loc=4)
+	plt.show()
+
+def deltaConvergence():
+	X = []
+	Y = []
+	Y2 = []
+	for i in xrange(3, 149, 1):
+		# X.append(i)
+		# Y.append(getDelta(N=i))
+		delta = getDelta(N=i)
+		if i % 2 == 0:
+			X.append(i)
+			Y.append(delta)
+		else:
+			Y2.append(delta)
+		# print i
+		# print Y
+		# print Y2
+	# plt.plot(X, Y, label="binomial tree")
+	plt.plot(X, Y, label="even")
+	plt.plot(X, Y2, label="odd")
+	plt.xlabel('N')
+	plt.ylabel('delta')
+	plt.plot(X, [BS()[1] for x in X], label="Black-Scholes")
+	plt.legend()
 	plt.show()
 
 def plotPriceVSVolatility():
@@ -78,19 +110,19 @@ def plotPriceVSVolatility():
 	Y = []
 	Y2 = []
 	Y3 = []
-	vold1 = np.linspace(0.01, 0.9, 10)
+	vold1 = np.linspace(0.01, 0.9, 30)
 	for v in vold1:
 		X.append(v * 100)
-		vals, S = computeMat(v=v, type='put', european=True)
+		vals, S = computeMat(v=v,type='call', european=True)
 		Y.append(vals[0,0])
-		# s, deltabs = BS(vd1=v, vd2=v)
-		# Y2.append(s)
-		vals, S = computeMat(v=v, type='put', european=False)
-		Y3.append(vals[0,0])
+		s, deltabs = BS(vd1=v, vd2=v)
+		Y2.append(s)
+		# vals, S = computeMat(v=v, type='put', european=False)
+		# Y3.append(vals[0,0])
 
 	plt.plot(X, Y, label="Binomial tree")
-	# plt.plot(X, Y2, label="Black-Scholes")
-	plt.plot(X, Y3, label="american")
+	plt.plot(X, Y2, label="Black-Scholes")
+	# plt.plot(X, Y3, label="american")
 	plt.xlabel('volatility in %')
 	plt.ylabel('call option price in euro')
 	plt.legend(loc=2)
@@ -107,11 +139,7 @@ def plotDeltaVSVolatility(K=[99]):
 		Y2 = []
 		for v in vold1:
 			X.append(v * 100)
-			vals, S = computeMat(v=v, type='call', european=True, k=k)
-
-			delta_f = vals[1, 1] - vals[2,1]
-			delta_S = S[1, 1] - S[2,1]
-			delta = delta_f / delta_S
+			delta = getDelta(v=v, type='call', european=True, k=k)
 			Y.append(delta)
 			s, deltabs = BS(vd1=v, vd2=v, k=k+0.0)
 			Y2.append(deltabs)
@@ -122,6 +150,8 @@ def plotDeltaVSVolatility(K=[99]):
 		plot.set_xlabel('volatility in %')
 		plot.set_ylabel('delta for k=' + str(k))
 		plot.legend()
+		if k == 150:
+			plot.legend(loc=4)
 		i+=1
 
 	plt.show()
@@ -133,9 +163,9 @@ def testPutCallParity():
 	X = []
 	for k in xrange(50,150,5):
 		X.append(k)
-		P.append(computeMat(type="put",k=k)[0][0,0])
-		C.append(computeMat(type="call", k=k)[0][0,0])
-		F.append(computeMat(type="forward", k=k)[0][0,0])
+		P.append(getPrice(type="put",k=k))
+		C.append(getPrice(type="call",k=k))
+		F.append(getPrice(type="forward",k=k))
 	plt.plot(X, P, label="put")
 	plt.plot(X, C, label="call")
 	plt.plot(X, F, label="forward")
@@ -146,9 +176,11 @@ def testPutCallParity():
 
 
 # binomialConvergence()
-# plotPriceVSVolatility()
-# plotDeltaVSVolatility(K=[50, 99, 120, 150])
-print testPutCallParity()
+plotPriceVSVolatility()
+# plotDeltaVSVolatility(K=[50, 99, 150])
+# print testPutCallParity()
+# deltaConvergence()
+# print computeMat()[0][:,50]
 
 # vals,s = computeMat(european=True, type="call")
 # print vals[0,0]
