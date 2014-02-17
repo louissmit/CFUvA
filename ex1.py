@@ -44,6 +44,15 @@ def computeMat(k=99, s0=100, r = 0.06, v=0.2, N=50, type="call", european=True):
 
 	return vals, S
 
+def getPrice(**kwargs):
+	return computeMat(**kwargs)[0][0,0]
+
+def getDelta(**kwargs):
+	vals, S = computeMat(**kwargs)
+
+	delta_f = vals[1, 1] - vals[2,1]
+	delta_S = S[1, 1] - S[2,1]
+	return delta_f / delta_S
 
 def binomialConvergence():
 	X = []
@@ -69,6 +78,28 @@ def binomialConvergence():
 	plt.ylabel('call option price in euro')
 	plt.plot(X, [BS()[0] for x in X], label="Black-Scholes")
 	plt.legend(loc=4)
+	plt.show()
+
+def deltaConvergence():
+	X = []
+	Y = []
+	Y2 = []
+	for i in xrange(3, 201, 5):
+		# X.append(i)
+		# Y.append(getDelta(N=i))
+		delta = getDelta(N=i)
+		if i % 2 == 0:
+			X.append(i)
+			Y.append(delta)
+		else:
+			Y2.append(delta)
+	# plt.plot(X, Y, label="delta")
+	plt.plot(X, Y, label="even")
+	plt.plot(X, Y2, label="odd")
+	plt.xlabel('N')
+	plt.ylabel('delta')
+	plt.plot(X, [BS()[1] for x in X], label="Black-Scholes")
+	plt.legend()
 	plt.show()
 
 def plotPriceVSVolatility():
@@ -105,11 +136,7 @@ def plotDeltaVSVolatility(K=[99]):
 		Y2 = []
 		for v in vold1:
 			X.append(v * 100)
-			vals, S = computeMat(v=v, type='call', european=True, k=k)
-
-			delta_f = vals[1, 1] - vals[2,1]
-			delta_S = S[1, 1] - S[2,1]
-			delta = delta_f / delta_S
+			delta = getDelta(v=v, type='call', european=True, k=k)
 			Y.append(delta)
 			s, deltabs = BS(vd1=v, vd2=v, k=k)
 			Y2.append(deltabs)
@@ -131,9 +158,9 @@ def testPutCallParity():
 	X = []
 	for k in xrange(50,150,5):
 		X.append(k)
-		P.append(computeMat(type="put",k=k)[0][0,0])
-		C.append(computeMat(type="call", k=k)[0][0,0])
-		F.append(computeMat(type="forward", k=k)[0][0,0])
+		P.append(getPrice(type="put",k=k))
+		C.append(getPrice(type="call",k=k))
+		F.append(getPrice(type="forward",k=k))
 	plt.plot(X, P, label="put")
 	plt.plot(X, C, label="call")
 	plt.plot(X, F, label="forward")
@@ -146,7 +173,8 @@ def testPutCallParity():
 # binomialConvergence()
 # plotPriceVSVolatility()
 # plotDeltaVSVolatility(K=[50, 99, 120, 150])
-print testPutCallParity()
+# print testPutCallParity()
+deltaConvergence()
 
 # vals,s = computeMat(european=True, type="call")
 # print vals[0,0]
