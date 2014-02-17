@@ -5,7 +5,12 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 from blackscholes import BS
 
+#this is just a test
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
 	dt = 1.0 / N
 	u = np.exp(v*np.sqrt(dt))
