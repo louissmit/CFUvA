@@ -49,23 +49,26 @@ def binomialConvergence():
 	X = []
 	Y = []
 	Y2 = []
-	for i in xrange(1, 121, 1):
+	for i in xrange(1, 101, 1):
 		vals, S = computeMat(N=i)
 		price = vals[0,0]
 
-		if i % 2 == 0:
-			X.append(i)
-			Y.append(price)
-		else:
-			Y2.append(price)
+		X.append(i)
+		Y.append(price)
+		# if i % 2 == 0:
+		# 	X.append(i)
+		# 	Y.append(price)
+		# else:
+		# 	Y2.append(price)
 	# pickle.dump(Y, open( "prices", "wb" ))
 
-	plt.plot(X, Y, label="even")
-	plt.plot(X, Y2, label="odd")
+	# plt.plot(X, Y, label="even")
+	plt.plot(X, Y, label="binomial tree")
+	# plt.plot(X, Y2, label="odd")
 	plt.xlabel('N')
 	plt.ylabel('call option price in euro')
-	plt.plot(X, [BS() for x in X])
-	plt.legend()
+	plt.plot(X, [BS()[0] for x in X], label="Black-Scholes")
+	plt.legend(loc=4)
 	plt.show()
 
 def plotPriceVSVolatility():
@@ -93,17 +96,20 @@ def plotPriceVSVolatility():
 	plt.show()
 
 def plotDeltaVSVolatility(K=[99]):
-	X = []
-	Y = []
-	Y2 = []
+
 	vold1 = np.linspace(0.01, 0.9, 50)
 	i = 1
 	for k in K:
+		X = []
+		Y = []
+		Y2 = []
 		for v in vold1:
 			X.append(v * 100)
 			vals, S = computeMat(v=v, type='call', european=True, k=k)
 
-			delta = (vals[1, 1] - vals[1,2]) / (S[1,1] - S[1, 2])
+			delta_f = vals[1, 1] - vals[2,1]
+			delta_S = S[1, 1] - S[2,1]
+			delta = delta_f / delta_S
 			Y.append(delta)
 			s, deltabs = BS(vd1=v, vd2=v, k=k)
 			Y2.append(deltabs)
@@ -112,15 +118,15 @@ def plotDeltaVSVolatility(K=[99]):
 		plot.plot(X, Y, label="Binomial tree")
 		plot.plot(X, Y2, label="Black-Scholes")
 		plot.set_xlabel('volatility in %')
-		plot.set_ylabel('delta for ' + str(k))
+		plot.set_ylabel('delta for k=' + str(k))
 		plot.legend()
 		i+=1
 
 	plt.show()
 
-binomialConvergence()
+# binomialConvergence()
 # plotPriceVSVolatility()
-# plotDeltaVSVolatility(K=[50, 99, 150])
+plotDeltaVSVolatility(K=[50, 99, 120, 150])
 
 # vals,s = computeMat(european=True, type="call")
 # print vals[0,0]
