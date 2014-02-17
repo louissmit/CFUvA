@@ -8,10 +8,10 @@ from blackscholes import BS
 #this is just a test, i will recommit this thing
 
 
-def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
+def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True, v_opt=0.2):
 	dt = 1.0 / N
-	u = np.exp(v*np.sqrt(dt))
-	d = np.exp(-v*np.sqrt(dt))
+	u = np.exp(v_opt*np.sqrt(dt))
+	d = np.exp(-v_opt*np.sqrt(dt))
 
 	p = (np.exp(r*dt)-d)/(u-d)
 
@@ -141,6 +141,29 @@ def proofOscillations():
     plt.plot(X,Y)
     plt.xlabel('Number of timesteps N')
     plt.ylabel('The fraction of non-zeros prices at expriation date')
+    
+    
+def plotPriceVSVolatilityDiff(call='call', european=True):
+    X = []
+    Y = []
+    #Y2 = []
+    vold1 = np.linspace(0.05, 0.8, 40)
+    for v in vold1:
+        X.append(v * 100)
+        vals, S = computeMat(v=0.2, type=call, european=european,v_opt=v)
+        Y.append(vals[0,0])
+        #Y2.append(computeMat(v=0.2, type1=call, v_opt=v)[0,0])
+
+    plt.axhline(y=computeMat(v=0.2, type=call, european=european,v_opt=0.2)[0][0,0],color='r')
+    plt.plot(X, Y,color='b')
+    #plt.plot(X, Y2)
+    plt.xlabel('volatility in option pricing in %')
+    plt.ylabel('call option price in euro')
+    plt.title('Volatility in stock process fixed at 20%')
+    
+    print Y
+
+    plt.show()
         
         
         
