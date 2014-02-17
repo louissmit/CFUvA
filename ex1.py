@@ -159,23 +159,21 @@ def plotDeltaVSVolatility(K=[99]):
 	plt.show()
  
 def proofOscillations():
-    X = []
-    Y = []
-    for n in range(2,30,1):
-        vals, S = computeMat(N=n)
-        v = vals[n-1,:]
-        np.count_nonzero(v)
-        #print idxs
-        #print n, (np.count_nonzero(v)+0.0)/n
-        X.append(n)
-        Y.append((np.count_nonzero(v)+0.0)/n)
-        
-    plt.plot(X,Y)
-    plt.xlabel('Number of timesteps N')
-    plt.ylabel('The fraction of non-zeros prices at expriation date')
-        
-        
-        
+	X = []
+	Y = []
+	for n in range(2,130,1):
+		vals, S = computeMat(N=n)
+		v = vals[n-1,:]
+		np.count_nonzero(v)
+		#print idxs
+		#print n, (np.count_nonzero(v)+0.0)/n
+		X.append(n)
+		Y.append((np.count_nonzero(v)+0.0)/n)
+
+	plt.plot(X,Y)
+	plt.xlabel('Number of timesteps N')
+	plt.ylabel('The fraction of non-zeros prices at expriation date')
+	plt.show()
 
 def testPutCallParity():
 	P = []
@@ -197,7 +195,7 @@ def testPutCallParity():
 
 
 # binomialConvergence()
-plotPriceVSVolatility()
+# plotPriceVSVolatility()
 # plotDeltaVSVolatility(K=[50, 99, 150])
 # print testPutCallParity()
 # deltaConvergence()
