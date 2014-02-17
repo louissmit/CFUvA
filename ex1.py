@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 from blackscholes import BS
 
+#this is just a test, i will recommit this thing
+
 
 def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
 	dt = 1.0 / N
@@ -155,6 +157,25 @@ def plotDeltaVSVolatility(K=[99]):
 		i+=1
 
 	plt.show()
+ 
+def proofOscillations():
+    X = []
+    Y = []
+    for n in range(2,30,1):
+        vals, S = computeMat(N=n)
+        v = vals[n-1,:]
+        np.count_nonzero(v)
+        #print idxs
+        #print n, (np.count_nonzero(v)+0.0)/n
+        X.append(n)
+        Y.append((np.count_nonzero(v)+0.0)/n)
+        
+    plt.plot(X,Y)
+    plt.xlabel('Number of timesteps N')
+    plt.ylabel('The fraction of non-zeros prices at expriation date')
+        
+        
+        
 
 def testPutCallParity():
 	P = []
@@ -188,3 +209,4 @@ plotPriceVSVolatility()
 # print vals[0,0]
 # print computeMat(european=False, type="put")[0,0]
 # print computeMat(european=False, type="forward")[0,0]
+proofOscillations()
