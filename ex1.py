@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 from blackscholes import BS
 
+#this is just a test, i will recommit this thing
 
-def computeMat(k=99, s0=100, r = 0.06, v=0.2, N=50, type="call", european=True):
+
+def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
 	dt = 1.0 / N
 	u = np.exp(v*np.sqrt(dt))
 	d = np.exp(-v*np.sqrt(dt))
@@ -138,7 +140,7 @@ def plotDeltaVSVolatility(K=[99]):
 			X.append(v * 100)
 			delta = getDelta(v=v, type='call', european=True, k=k)
 			Y.append(delta)
-			s, deltabs = BS(vd1=v, vd2=v, k=k)
+			s, deltabs = BS(vd1=v, vd2=v, k=k+0.0)
 			Y2.append(deltabs)
 
 		plot = plt.subplot(1 , len(K),i)
