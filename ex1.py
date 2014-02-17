@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import cPickle as pickle
 from blackscholes import BS
 
-#this is just a test, i will recommit this thing
-
 
 def computeMat(k=99.0, s0=100.0, r = 0.06, v=0.2, N=50, type="call", european=True):
 	dt = 1.0 / N
@@ -131,6 +129,25 @@ def plotPriceVSVolatility():
 
 	plt.show()
 
+def plotAmericanVSEuropean():
+	X = []
+	Y = []
+	Y2 = []
+	Y3 = []
+	vold1 = np.linspace(0.01, 0.9, 30)
+	for v in vold1:
+		X.append(v * 100)
+		Y.append(getPrice(v=v,type='call', european=True))
+		Y2.append(getPrice(v=v,type='call', european=False))
+	plt.plot(X, Y, label="European call")
+	plt.plot(X, Y2, label="American call")
+	# plt.plot(X, Y3, label="american")
+	plt.xlabel('volatility in %')
+	plt.ylabel('call option price in euro')
+	plt.legend(loc=2)
+
+	plt.show()
+
 def plotDeltaVSVolatility(K=[99]):
 
 	vold1 = np.linspace(0.01, 0.9, 50)
@@ -207,4 +224,6 @@ def testPutCallParity():
 # print vals[0,0]
 # print computeMat(european=False, type="put")[0,0]
 # print computeMat(european=False, type="forward")[0,0]
-proofOscillations()
+# proofOscillations()
+# plotAmericanVSEuropean()
+print getPrice()
