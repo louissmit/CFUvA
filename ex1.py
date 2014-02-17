@@ -125,10 +125,29 @@ def plotDeltaVSVolatility(K=[99]):
 		i+=1
 
 	plt.show()
+ 
+def proofOscillations():
+    X = []
+    Y = []
+    for n in range(2,30,1):
+        vals, S = computeMat(N=n)
+        v = vals[n-1,:]
+        np.count_nonzero(v)
+        #print idxs
+        #print n, (np.count_nonzero(v)+0.0)/n
+        X.append(n)
+        Y.append((np.count_nonzero(v)+0.0)/n)
+        
+    plt.plot(X,Y)
+    plt.xlabel('Number of timesteps N')
+    plt.ylabel('The fraction of non-zeros prices at expriation date')
+        
+        
+        
 
 # binomialConvergence()
 # plotPriceVSVolatility()
-plotDeltaVSVolatility(K=[50, 99, 120, 150])
+#plotDeltaVSVolatility(K=[50, 99, 120, 150])
 
 # vals,s = computeMat(european=True, type="call")
 # print vals[0,0]
@@ -136,3 +155,4 @@ plotDeltaVSVolatility(K=[50, 99, 120, 150])
 # print vals[0,0]
 # print computeMat(european=False, type="put")[0,0]
 # print computeMat(european=False, type="forward")[0,0]
+proofOscillations()
