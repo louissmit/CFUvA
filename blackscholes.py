@@ -7,5 +7,3 @@ def BS(k=99.0, s0=100.0, r = 0.06, vd1=0.2, vd2=0.2, T=1):
     stock = s0*norm.cdf(d1)
     opt = k * np.exp(-r*T)*norm.cdf(d2)
     return stock-opt, norm.cdf(d1)
-
-print BS()
