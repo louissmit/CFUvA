@@ -124,7 +124,7 @@ def varianceAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100, meanPayoff=T
         payoffs = [max(0,x-k)*numpy.exp(-r*T) for x in sn]
     
     #return sn
-    return mean(payoffs), numpy.sqrt(numpy.var(payoffs))/numpy.sqrt(M)
+    return numpy.mean(payoffs), numpy.sqrt(numpy.var(payoffs))/numpy.sqrt(M)
     
     
 def plotAntitheticShit():
@@ -154,6 +154,5 @@ def plotAntitheticShit():
     plt.plot(X,Y2,label='Vanilla')
     plt.legend()
     plt.show()
-            
-    
-    
+
+print computeMCValuation()
