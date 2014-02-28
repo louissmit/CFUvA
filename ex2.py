@@ -7,6 +7,7 @@ This temporary script file is located here:
 """
 
 import numpy
+import scipy
 import random
 import matplotlib.pyplot as plt
 
@@ -154,6 +155,39 @@ def plotAntitheticShit():
     plt.plot(X,Y2,label='Vanilla')
     plt.legend()
     plt.show()
-            
+
+def plotCovarianceOfAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100):
+    k = numpy.linspace(10,10000,50)
+    s_t = lambda Z: s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
     
+    for i in k:
+        valsplus = numpy.zeros((i,1))
+        #print valsplus
+        valsplus = [random.gauss(0,1) for x in valsplus]
+        valsminus = (-1)*numpy.array(valsplus)
+        #print valsminus, valsplus
+        valsplus = [s_t(z) for z in valsplus]
+        valsminus = [s_t(z) for z in valsminus]
+        print numpy.cov(valsplus,valsminus)
     
+                
+
+def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
+    delta_t = 1.0/365
+    time_steps = T/delta_t
+    
+    values = numpy.zeros((M,time_steps))
+    values[:,0] = s0;
+    for i in xrange(1,int(time_steps)):
+        print i
+        shocks = scipy.randn(1,M)
+        shocks = shocks*v*numpy.sqrt(delta_t)+r*delta_t
+        values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
+        print values[:,i].shape
+        
+    relevant_values = values[:,time_steps-N:]
+    relevant_values = numpy.mean(relevant_values,axis=1)
+    payoff = [max(x-k,0) for x in relevant_values]
+    #numpy.mean(relevant_values-k)
+        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
+    return numpy.mean(payoff)
