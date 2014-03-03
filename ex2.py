@@ -181,19 +181,22 @@ def plotCovarianceOfAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100):
                 
 
 def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
-    delta_t = 1.0/365
-    time_steps = T/delta_t
+    delta_t = (T+0.0)/N
+    time_steps = N
     
-    values = numpy.zeros((M,time_steps))
+    values = numpy.zeros((M,time_steps+1))
     values[:,0] = s0;
-    for i in xrange(1,int(time_steps)):
-        print i
+    for i in xrange(1,int(time_steps+1)):
+        #print i
         shocks = scipy.randn(1,M)
+        #print shocks
         shocks = shocks*v*numpy.sqrt(delta_t)+r*delta_t
         values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
-        print numpy.var(shocks)
+        #print numpy.var(shocks)
         
-    relevant_values = values[:,time_steps-N:]
+    relevant_values = values[:,1:-1]
+    #print values.size
+    #print relevant_values.shape
     relevant_values = numpy.mean(relevant_values,axis=1)
     payoff = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values]
     #numpy.mean(relevant_values-k)
@@ -201,39 +204,71 @@ def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
     return numpy.mean(payoff)
     
     
-def computeAsianCV(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
-    delta_t = 1.0/365
-    time_steps = T/delta_t
+def computeAsianCV(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000, N = 10):
+    delta_t = (T+0.0)/N
+    time_steps = N
     
-    values = numpy.zeros((M,time_steps))
+    values = numpy.zeros((M,time_steps+1))
     values[:,0] = s0;
-    for i in xrange(1,int(time_steps)):
-        print i
+    for i in xrange(1,int(time_steps+1)):
+        #print i
         shocks = scipy.randn(1,M)
-        shocks2 = shocks*v*numpy.sqrt(delta_t)+r*delta_t
-        values[:,i] = (numpy.multiply(shocks2,values[:,i-1])+values[:,i-1])
-        print values[:,i].shape
+        shocks = shocks*v*numpy.sqrt(delta_t)+r*delta_t
+        values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
+        #print numpy.var(shocks)
         
-    relevant_values = values[:,time_steps-N:]
+    relevant_values = values[:,1:]
     relevant_values_CA = numpy.mean(relevant_values,axis=1)
     relevant_values_CB = scipy.stats.gmean(relevant_values, axis=1)
-    print relevant_values_CB
-    print relevant_values_CA
     
     #test_N = N*(T+0.0)/365
-    weird_sig = numpy.sqrt(T*pow(v,2)*(N+1)*(2*N+1)/(6*pow(N,2)))
+    weird_sig = T*pow(v,2)*(N+1)*(2*N+1)/(6*pow(N,2))
     weird_mean = T*(r - pow(v,2)/2)*(N+1)/(2*N)
-    #perfect_values_CB = scipy.randn(1,M)
-    perfect_values_CB = shocks*weird_sig + weird_mean
-    perfect_values_CB = numpy.exp(perfect_values_CB)
-    perfect_values_CB = perfect_values_CB*s0
-    print perfect_values_CB
     
     d1 = (numpy.log(s0/k)+weird_mean)/(weird_sig)
     d2 = d1 - weird_sig
     stock = s0*scipy.stats.norm.cdf(d1)
     opt = k * numpy.exp(-r*T)*scipy.stats.norm.cdf(d2)
     payoff_CA = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values_CA]
-    #numpy.mean(relevant_values-k)
-        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
-    return stock-opt, numpy.mean(payoff_CA)
+    payoff_CB = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values_CB]
+
+        
+    beta = numpy.corrcoef(payoff_CA,payoff_CB)[0,1]*numpy.sqrt(numpy.var(payoff_CA))/numpy.sqrt(numpy.var(payoff_CB))
+    out = numpy.mean(payoff_CA) - beta*(numpy.mean(payoff_CB) - (stock-opt))
+    return numpy.mean(payoff_CA), out, numpy.mean(payoff_CB), stock-opt
+    
+    
+def plotCVthing():
+    shocks = numpy.linspace(500,50000,25)
+    
+    X = []
+    Y = []
+    Y2 = []
+    err = []
+    err2 = []
+    for x in shocks:
+        a = 0
+        Ya = []
+        Yb = []
+        while(a < 10):
+            out = computeAsianCV(M=x,N=15)
+            Ya.append(out[0])
+            Yb.append(out[1])
+            a = a+1
+        
+        X.append(x)
+        Y.append(numpy.mean(Ya))
+        Y2.append(numpy.mean(Yb))
+        err.append(numpy.sqrt(numpy.var(Ya)))        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
+        err2.append(numpy.sqrt(numpy.var(Yb)))
+        
+    #plt.plot(X,err,label='Vanilla')
+    #plt.plot(X,err2,label='Control Variate')
+    plt.errorbar(X,Y,yerr=err)
+    plt.errorbar(X,Y2,yerr=err2)
+    plt.legend()
+    plt.show()
+    print err2
+    
+def plotAsian():
+    print 5
