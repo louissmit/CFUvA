@@ -115,7 +115,7 @@ def plotPriceVSVolatility():
 		X.append(v * 100)
 		vals, S = computeMat(v=v,type='call', european=True)
 		Y.append(vals[0,0])
-		s, deltabs = BS(vd1=v, vd2=v)
+		s = BS(vd1=v, vd2=v)[0]
 		Y2.append(s)
 		# vals, S = computeMat(v=v, type='put', european=False)
 		# Y3.append(vals[0,0])
@@ -212,7 +212,7 @@ def testPutCallParity():
 
 
 # binomialConvergence()
-# plotPriceVSVolatility()
+plotPriceVSVolatility()
 # plotDeltaVSVolatility(K=[50, 99, 150])
 # print testPutCallParity()
 # deltaConvergence()
@@ -226,4 +226,4 @@ def testPutCallParity():
 # print computeMat(european=False, type="forward")[0,0]
 # proofOscillations()
 # plotAmericanVSEuropean()
-print getPrice()
+# print getPrice()

@@ -31,7 +31,7 @@ def computeMCValuation(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000, type="cal
 def getPrice(**kwargs):
 	return computeMCValuation(**kwargs)[0]
 
-def computeDelta(payoff = 'EuropeanC',k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000, bump = 0.1, sameSeed = True):
+def computeDelta(type = 'EuropeanC',k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000, bump = 0.01, sameSeed = True):
 
 	shocks = np.zeros((M,1))
 
@@ -50,10 +50,10 @@ def computeDelta(payoff = 'EuropeanC',k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10
 	s_bumped = np.array(shocks)*(s0+bump)
 
 	#computing payoffs
-	if payoff == 'EuropeanC':
+	if type == 'EuropeanC':
 		s_payoff = [max(x-k,0) for x in s]
 		sb_payoff = [max(x-k,0) for x in s_bumped]
-	elif payoff == 'Digital':
+	elif type == 'Digital':
 		s_payoff = [x>k for x in s]
 		sb_payoff = [x>k for x in s_bumped]
 
@@ -72,9 +72,9 @@ def computeDeltaApprox(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000):
 	sigmoid = lambda x,k: 1/(1+np.exp(-(x-k)))
 	sigmoid_d = lambda x,k: sigmoid(x,k)*(1-sigmoid(x,k))
 
-	sigmoid_d2 = lambda x,k: np.abs(x-k)<0.5
+	# sigmoid_d2 = lambda x,k: np.abs(x-k)<0.5
 
-	deltas = [sigmoid_d2(x,k)*x/s0 for x in s]
+	deltas = [sigmoid_d(x,k)*x/s0 for x in s]
 
 	return np.mean(deltas)
 
@@ -102,7 +102,6 @@ def plotValuationConvergence(n=10, ms = np.linspace(50,100000,15)):
 			X.append(int(m))
 			Y.append(computeMCValuation(M=int(m))[0])
 
-	print X,Y
 	plt.scatter(X,Y)
 
 def varianceAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100, meanPayoff=True):
@@ -174,7 +173,7 @@ def plotStandardError(maxM=50000):
 	plt.legend()
 	plt.show()
 
-def plotConvergence(maxM=20000):
+def plotConvergence(maxM=50000):
 	X = []
 	Y = []
 	for M in xrange(10, maxM, 100):
@@ -185,7 +184,8 @@ def plotConvergence(maxM=20000):
 	plt.plot(X, [BS()[0] for x in X], label="Black-Scholes")
 	plt.plot(X, Y)
 	plt.xlabel('M')
-	plt.ylabel('standard error')
+	plt.ylabel('price')
+	plt.legend()
 	plt.show()
 
 def plotPriceVSVolatility():
@@ -197,7 +197,7 @@ def plotPriceVSVolatility():
 		X.append(v * 100)
 		c = computeMCValuation(v=v)[0]
 		Y.append(c)
-		s, deltabs = BS(vd1=v, vd2=v)
+		s = BS(vd1=v, vd2=v)[0]
 		Y2.append(s)
 
 	plt.plot(X, Y, label="Monte Carlo")
@@ -225,9 +225,53 @@ def priceVSStrike():
 	plt.legend()
 	plt.show()
 
+def deltaVSEpsilonM():
+
+	for m in [pow(10,4), pow(10,5)]:
+		s = ""
+		for e in [0.01, 0.02, 0.5]:
+			error = np.round(abs(1 - (BS()[1] / computeDelta(M=m, bump=e, sameSeed=True)))*100,2)
+			s += str(error) + "\% & "
+
+		print s + "\n"
+
+def plotDelta(maxM = 100000):
+	X = []
+	Y = []
+	for M in xrange(1000, maxM, 2000):
+		X.append(M)
+		delta = computeDelta(M=M)
+		Y.append(delta)
+	plt.plot(X, Y)
+	plt.xlabel('M')
+	plt.ylabel('delta')
+	plt.show()
+
+
+def deltaUncertainty(approx_type="bump", M=50000, **kwargs):
+	n = 300
+	X = np.empty((n,1))
+	for i in xrange(0, n):
+		if approx_type == 'bump':
+			delta = computeDelta(M=M, **kwargs)
+		elif approx_type == 'smooth':
+			delta = computeDeltaApprox(M=M, **kwargs)
+		elif approx_type == 'likelihood':
+			delta = computeDeltaLikelihood(M=M)
+
+		X[i] = delta
+	print np.mean(X)
+	print np.sqrt(np.var(X))
+
+# deltaUncertainty(approx_type='smooth')
+# print computeMCValuation(type="put")
+# plotAntitheticShit()
 # priceVSStrike()
-# print computeDelta()
-print computeDelta(sameSeed=False)
+# print computeDelta(M=200000)
+# print BS()[1]
+# print computeDelta(sameSeed=False)
+# deltaVSEpsilonM()
+# plotDelta()
 # plotStandardError()
 # plotConvergence()
-# plotPriceVSVolatility()
+plotPriceVSVolatility()
