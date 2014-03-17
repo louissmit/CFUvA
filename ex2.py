@@ -183,6 +183,7 @@ def plotCovarianceOfAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100):
 def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
     delta_t = (T+0.0)/N
     time_steps = N
+    print v
     
     values = numpy.zeros((M,time_steps+1))
     values[:,0] = s0;
@@ -194,7 +195,7 @@ def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
         values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
         #print numpy.var(shocks)
         
-    relevant_values = values[:,1:-1]
+    relevant_values = values[:,1:]
     #print values.size
     #print relevant_values.shape
     relevant_values = numpy.mean(relevant_values,axis=1)
@@ -207,6 +208,8 @@ def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
 def computeAsianCV(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000, N = 10):
     delta_t = (T+0.0)/N
     time_steps = N
+    
+    print N
     
     values = numpy.zeros((M,time_steps+1))
     values[:,0] = s0;
@@ -233,7 +236,8 @@ def computeAsianCV(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000, N = 10):
     payoff_CB = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values_CB]
 
         
-    beta = numpy.corrcoef(payoff_CA,payoff_CB)[0,1]*numpy.sqrt(numpy.var(payoff_CA))/numpy.sqrt(numpy.var(payoff_CB))
+    #beta = numpy.corrcoef(payoff_CA,payoff_CB)[0,1]*numpy.sqrt(numpy.var(payoff_CA))/numpy.sqrt(numpy.var(payoff_CB))
+    beta = numpy.corrcoef(payoff_CA,payoff_CB)[0,1]*numpy.var(payoff_CB)/numpy.var(payoff_CA)
     out = numpy.mean(payoff_CA) - beta*(numpy.mean(payoff_CB) - (stock-opt))
     return numpy.mean(payoff_CA), out, numpy.mean(payoff_CB), stock-opt
     
@@ -264,11 +268,84 @@ def plotCVthing():
         
     #plt.plot(X,err,label='Vanilla')
     #plt.plot(X,err2,label='Control Variate')
-    plt.errorbar(X,Y,yerr=err)
-    plt.errorbar(X,Y2,yerr=err2)
+    plt.errorbar(X,Y,yerr=err, label='w/o control variate')
+    plt.errorbar(X,Y2,yerr=err2, label='with control variate')
     plt.legend()
     plt.show()
     print err2
     
+from scipy.stats import norm
+import numpy as np
+
+def BS(k=99.0, s0=100.0, r = 0.06, v=0.2, T=1):
+    d1 = (np.log(s0/k)+(r+pow(v,2)/2)*T)/(v*np.sqrt(T))
+    d2 = (np.log(s0/k)+(r+pow(v,2)/2)*T)/(v*np.sqrt(T)) - v/np.sqrt(T)
+    stock = s0*norm.cdf(d1)
+    opt = k * np.exp(-r*T)*norm.cdf(d2)
+    return stock-opt
+    
 def plotAsian():
-    print 5
+    shocks = numpy.linspace(1,40,10)
+    
+    X = []
+    Y = []
+    #Y2 = []
+    err = []
+    #err2 = []
+    for x in shocks:
+        a = 0
+        Ya = []
+        Yb = []
+        while(a < 10):
+            out = computeAsian(M=40000,N=x)
+            Ya.append(out)
+            a = a+1
+        
+        X.append(x)
+        Y.append(numpy.mean(Ya))
+        #Y2.append(numpy.mean(Yb))
+        err.append(numpy.sqrt(numpy.var(Ya)))        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
+        #err2.append(numpy.sqrt(numpy.var(Yb)))
+        
+    #plt.plot(X,err,label='Vanilla')
+    #plt.plot(X,err2,label='Control Variate')
+    plt.errorbar(X,Y,yerr=err)
+    plt.xlabel('Number of observations')
+    plt.ylabel('Option price')
+    #plt.errorbar(X,Y2,yerr=err2)
+    plt.legend()
+    plt.show()
+    
+def plotAsianVol():
+    shocks = numpy.linspace(0.01,0.8,20)
+    
+    X = []
+    Y = []
+    Y2 = []
+    err = []
+    #err2 = []
+    for x in shocks:
+        a = 0
+        Ya = []
+        #Yb = []
+        while(a < 10):
+            out = computeAsian(M=40000,v=x, N=20)
+            Ya.append(out)
+            a = a+1
+        
+        X.append(x)
+        Y.append(numpy.mean(Ya))
+        Y2.append(BS(v=x))
+        err.append(numpy.sqrt(numpy.var(Ya)))        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
+        #err2.append(numpy.sqrt(numpy.var(Yb)))
+        
+    #plt.plot(X,err,label='Vanilla')
+    #plt.plot(X,err2,label='Control Variate')
+    plt.errorbar(X,Y,yerr=err,label='Asian')
+    plt.plot(X,Y2,label='European')
+    plt.xlabel('Volatility')
+    plt.ylabel('Option price for N=20')
+    #plt.errorbar(X,Y2,yerr=err2)
+    plt.legend()
+    plt.show()
+    
