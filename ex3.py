@@ -13,11 +13,11 @@ def LETSDOIT(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0):
     M1 = -10.0
     M2 = 10.0
     
-    V[1:,0] = numpy.linspace(M1, M2, I+1)
+    V[:-1,0] = numpy.linspace(M1, M2, I+1)
  
     int_incrs = (M2 - M1) / I
      
-    delta_x = numpy.exp(0.2)
+    delta_x = 0.2
     delta_t = -T/N
 
     #for i in range_x:
@@ -56,7 +56,6 @@ def LETSDOIT(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0):
         #c[I] = b1*big_mat[i-1,j+1]+b0*big_mat[i-1,j]+b_1*big_mat[i-1,j-1]-a1*big_mat[i,j+1]
         c[I-1] = b1*V[I+1,n]+b0*V[I,n]+b_1*V[I-1,n] #- a1*big_mat[I, n+1]
         for j in xrange(1,I-1):
-            
             c[j] = b1*V[j+1,n]+b0*V[j,n]+b_1*V[j-1,n]
             
         V[0:I ,n+1] = numpy.dot(Abar,c).T
