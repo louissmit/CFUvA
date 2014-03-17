@@ -37,10 +37,12 @@ def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0,
 		a1=0
 		a0=1
 		a_1=0
-	else:
+	elif type == 'cn':
 		a1 = -alpha - beta/2
 		a0 = beta + gamma/2 + 1
 		a_1 = alpha - beta/2
+	else:
+		raise TypeError("not a valid scheme type")
 
 	A = numpy.zeros((I+1, I+1))
 	#FTCS:
@@ -76,7 +78,8 @@ def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0,
 			c[I] = b0*V[I,n]+ b_1*V[I-1,n] + b1*(V[I,n]+delta_x*numpy.exp(l+M2))#- a1*V[I+1, n+1] + b1*V[I+1,n]
 		else:
 			c[0] = b1*V[2,n] + b0*V[1,n] + b_1*V[0, n] - a_1*V[0,n+1]
-			c[I] = b0*V[I,n]+ beta*V[I-1,n] + b1*(V[I,n]+delta_x*numpy.exp(l+M2))
+			# c[I] = b0*V[I,n]+ beta*V[I-1,n] + b1*(V[I,n]+delta_x*numpy.exp(l+M2))
+			c[I] = (b1-a1)*(numpy.exp(-r*(T-n*delta_t))*max(numpy.exp(l+M2)-k,0)) + b0*V[I,n] + b_1*V[I-1,n]
 
 		for j in xrange(1,I):
 			c[j] = b1*V[j+1,n] + b0*V[j,n] + b_1*V[j-1,n]
@@ -134,22 +137,29 @@ def plotDelta(**kwargs):
 M, B, VN = plotDelta(k=110.0, s0=110.0, v=0.3, r=0.04)
 
 
-def getError(N1=1000,I1=1000):
-	mat,s = FD(N=N1, I=I1, type='cn')
+def plotV(N1=100,I1=100):
+	mat,s = FD(N=N1, I=I1, type='ftcs')
+	cn_mat,s = FD(N=N1, I=I1, type='cn')
 	x = [BS(s0=s0)[0] for s0 in s]
 
 	s = s[0:-1]
 	x = x[0:-1]
 
 	y = mat[0:-1,-1]
+	y_cn = cn_mat[0:-1,-1]
 
 	print len(x)
 	print len(y)
 	print len(s)
 
-	plt.plot(s,x,color='blue')
-	plt.plot(s,y,color='red')
+	plt.plot(s,x,color='blue', label="Black-Scholes")
+	plt.plot(s,y,color='green', label="FTCS")
+	plt.plot(s,y_cn,color='red', label="Crank-Nicholson")
+	plt.xlabel("$S_0$")
+	plt.ylabel("$V$")
+	plt.legend(loc=4)
+	plt.show()
 
 
-# M,s = FD(type='cn')
-# getError()
+# M,s = FD()
+plotV()
