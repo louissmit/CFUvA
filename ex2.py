@@ -6,269 +6,272 @@ This temporary script file is located here:
 /home/henning/.spyder2/.temp.py
 """
 
-import numpy
-import scipy
-import scipy.stats
+import numpy as np
+from blackscholes import BS
 import random
 import matplotlib.pyplot as plt
 
 
-def computeMCValuation(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000):
-    sols = numpy.zeros((M,1))
-    
-    for i in xrange(0,M):
-        Z = random.gauss(0,1)
-        sn = s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-        
-        sols[i] = max(0,sn-k)*numpy.exp(-r*T)
-        
-    
-    return numpy.mean(sols), numpy.sqrt(numpy.var(sols))/numpy.sqrt(M)
-    
-    
-def computeDelta(payoff = 'EuropeanC',k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000, bump = 0.1, sameSeed = True):
-    
-    shocks = numpy.zeros((M,1))
-    
-    for i in xrange(0,M):
-        Z = random.gauss(0,1)
-        shocks[i] = numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-        
-    s = numpy.array(shocks)*s0
+def computeMCValuation(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000, type="call"):
+	sols = np.zeros((M,1))
 
-    if not sameSeed:
-        for i in xrange(0,M):
-            Z = random.gauss(0,1)
-            shocks[i] = numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-    
-    
-    s_bumped = numpy.array(shocks)*(s0+bump)
-    
-    #computing payoffs
-    if payoff == 'EuropeanC':
-        s_payoff = [max(x-k,0) for x in s]
-        sb_payoff = [max(x-k,0) for x in s_bumped]
-    elif payoff == 'Digital':
-        s_payoff = [x>k for x in s]
-        sb_payoff = [x>k for x in s_bumped]
-        
-    
-    return (numpy.mean(sb_payoff)-numpy.mean(s_payoff))/bump
-    
-def computeUncertanty(function, M=20):
-    out = numpy.zeros((M,1))
-    out = [function() for x in out]
-    return numpy.mean(out),numpy.var(out)
-    
-    
-def computeDeltaApprox(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000):
-    s = numpy.zeros((M,1))    
-    
-    for i in xrange(0,M):
-        Z = random.gauss(0,1)
-        s[i] = s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-    
-    
-    sigmoid = lambda x,k: 1/(1+numpy.exp(-(x-k)))
-    sigmoid_d = lambda x,k: sigmoid(x,k)*(1-sigmoid(x,k))
-    
-    sigmoid_d2 = lambda x,k: numpy.abs(x-k)<0.5
-    
-    deltas = [sigmoid_d(x,k)*x/s0 for x in s]    
-    
-    return numpy.mean(deltas)
-        
+	for i in xrange(0,M):
+		Z = random.gauss(0,1)
+		sn = s0*np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
 
-def computeDeltaLikelihood(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000):
-    shocks = numpy.zeros((M,1))
-    shocks = [random.gauss(0,1) for x in shocks]
-    
-    
-    s_t = lambda Z: s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-    #weird_function = lambda Z: numpy.exp(-r*T)*(s_t(Z)>k)*Z/(v*s0*numpy.sqrt(T))
-    weird_function = lambda Z: (max(s_t(Z)-k,0))*Z/(v*s0*numpy.sqrt(T))
-    #weird_function = lambda Z: (s_t(Z)>k)*Z/(v*s0*numpy.sqrt(T))
-    
-    deltas = [weird_function(Z) for Z in shocks]
-    
-    return numpy.mean(deltas)
-    
-    
-def plotValuationConvergence(n=10, ms = numpy.linspace(50,100000,15)):
-    X=[]
-    Y=[]
-    
-    for m in ms:
-        for j in xrange(0,n):
-            #print int(m)
-            X.append(int(m))
-            Y.append(computeMCValuation(M=int(m))[0])
-            
-    print X,Y
-    plt.scatter(X,Y)
-    
+		if type=="call":
+			sols[i] = max(0,sn-k)*np.exp(-r*T)
+		elif type=="put":
+			sols[i] = max(0,k-sn)*np.exp(-r*T)
+		else:
+			raise TypeError("not a valid option type")
+
+	return np.mean(sols), np.sqrt(np.var(sols))/np.sqrt(M)
+
+def getPrice(**kwargs):
+	return computeMCValuation(**kwargs)[0]
+
+def computeDelta(type = 'EuropeanC',k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000, bump = 0.01, sameSeed = True):
+
+	shocks = np.zeros((M,1))
+
+	for i in xrange(0,M):
+		Z = random.gauss(0,1)
+		shocks[i] = np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
+
+	s = np.array(shocks)*s0
+
+	if not sameSeed:
+		for i in xrange(0,M):
+			Z = random.gauss(0,1)
+			shocks[i] = np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
+
+
+	s_bumped = np.array(shocks)*(s0+bump)
+
+	#computing payoffs
+	if type == 'EuropeanC':
+		s_payoff = [max(x-k,0) for x in s]
+		sb_payoff = [max(x-k,0) for x in s_bumped]
+	elif type == 'Digital':
+		s_payoff = [x>k for x in s]
+		sb_payoff = [x>k for x in s_bumped]
+
+
+	return (np.mean(sb_payoff)-np.mean(s_payoff))/bump
+
+
+def computeDeltaApprox(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000):
+	s = np.zeros((M,1))
+
+	for i in xrange(0,M):
+		Z = random.gauss(0,1)
+		s[i] = s0*np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
+
+
+	sigmoid = lambda x,k: 1/(1+np.exp(-(x-k)))
+	sigmoid_d = lambda x,k: sigmoid(x,k)*(1-sigmoid(x,k))
+
+	# sigmoid_d2 = lambda x,k: np.abs(x-k)<0.5
+
+	deltas = [sigmoid_d(x,k)*x/s0 for x in s]
+
+	return np.mean(deltas)
+
+
+def computeDeltaLikelihood(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100000):
+	shocks = np.zeros((M,1))
+	shocks = [random.gauss(0,1) for x in shocks]
+
+
+	s_t = lambda Z: s0*np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
+	weird_function = lambda Z: np.exp(-r*T)*(s_t(Z)>k)*Z/(v*s0*np.sqrt(T))
+
+	deltas = [weird_function(Z) for Z in shocks]
+
+	return np.mean(deltas)
+
+
+def plotValuationConvergence(n=10, ms = np.linspace(50,100000,15)):
+	X=[]
+	Y=[]
+
+	for m in ms:
+		for j in xrange(0,n):
+			#print int(m)
+			X.append(int(m))
+			Y.append(computeMCValuation(M=int(m))[0])
+
+	plt.scatter(X,Y)
+
 def varianceAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100, meanPayoff=True):
-    shocks = numpy.zeros((M,1))
-    shocks = [random.gauss(0,1) for x in shocks]
-    #shocks = [max(x,-x) for x in shocks]
-    shocks2= numpy.array(shocks)*(-1)
-    
-    #shocks = numpy.concatenate((shocks,shocks2),axis=1)
-    
-    
-    s_t = lambda Z: s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-    
-    sn = [s_t(Z) for Z in shocks]
-    sn2 = [s_t(Z) for Z in shocks2]
-    
-    if not meanPayoff:
-        sn = (numpy.array(sn)+numpy.array(sn2))/2
-    
-    if meanPayoff:
-        payoffs = [max(0,x-k)*numpy.exp(-r*T) for x in sn]
-        payoffs2 = [max(0,x-k)*numpy.exp(-r*T) for x in sn2]
-    
-        payoffs = (numpy.array(payoffs)+numpy.array(payoffs2))/2
-    else:
-        payoffs = [max(0,x-k)*numpy.exp(-r*T) for x in sn]
-    
-    #return sn
-    return mean(payoffs), numpy.sqrt(numpy.var(payoffs))/numpy.sqrt(M)
-    
-    
+	shocks = np.zeros((M,1))
+	shocks = [random.gauss(0,1) for x in shocks]
+	#shocks = [max(x,-x) for x in shocks]
+	shocks2= np.array(shocks)*(-1)
+
+	#shocks = np.concatenate((shocks,shocks2),axis=1)
+
+
+	s_t = lambda Z: s0*np.exp((r-0.5*pow(v,2))*T + v*np.sqrt(T)*Z)
+
+	sn = [s_t(Z) for Z in shocks]
+	sn2 = [s_t(Z) for Z in shocks2]
+
+	if not meanPayoff:
+		sn = (np.array(sn)+np.array(sn2))/2
+
+	if meanPayoff:
+		payoffs = [max(0,x-k)*np.exp(-r*T) for x in sn]
+		payoffs2 = [max(0,x-k)*np.exp(-r*T) for x in sn2]
+
+		payoffs = (np.array(payoffs)+np.array(payoffs2))/2
+	else:
+		payoffs = [max(0,x-k)*np.exp(-r*T) for x in sn]
+
+	#return sn
+	return np.mean(payoffs), np.sqrt(np.var(payoffs))/np.sqrt(M)
+
+
 def plotAntitheticShit():
-    total_M = 10000
-    m = numpy.linspace(50,5000,50)
-    
-    X = []
-    Y2 = []
-    Y = []
-    Y3 = []
-    
-    for mi in m:
-        results1 = []
-        results2 = []
-        results3 = []
-        for i in xrange(0,int(total_M/mi)):
-            results1.append(varianceAntithetic(M=int(mi/2))[1])
-            results3.append(varianceAntithetic(M=int(mi/2), meanPayoff = False)[1])
-            results2.append(computeMCValuation(M=int(mi))[1])
-        Y.append(numpy.mean(results1))
-        Y2.append(numpy.mean(results2))
-        Y3.append(numpy.mean(results3))
-        X.append(mi)
-        
-    plt.plot(X,Y,label='Antithetic Payoffmean')
-    plt.plot(X,Y,label='Antithetic Stockmean')
-    plt.plot(X,Y2,label='Vanilla')
-    plt.legend()
-    plt.show()
+	total_M = 10000
+	m = np.linspace(50,5000,50)
 
-def plotCovarianceOfAntithetic(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=100):
-    k = numpy.linspace(10,10000,50)
-    s_t = lambda Z: s0*numpy.exp((r-0.5*pow(v,2))*T + v*numpy.sqrt(T)*Z)
-    
-    for i in k:
-        valsplus = numpy.zeros((i,1))
-        #print valsplus
-        valsplus = [random.gauss(0,1) for x in valsplus]
-        valsminus = (-1)*numpy.array(valsplus)
-        #print valsminus, valsplus
-        valsplus = [s_t(z) for z in valsplus]
-        valsminus = [s_t(z) for z in valsminus]
-        print numpy.cov(valsplus,valsminus)
-    
-                
+	X = []
+	Y2 = []
+	Y = []
+	Y3 = []
 
-def computeAsian(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=10000, N = 10):
-    delta_t = (T+0.0)/N
-    time_steps = N
-    
-    values = numpy.zeros((M,time_steps+1))
-    values[:,0] = s0;
-    for i in xrange(1,int(time_steps+1)):
-        #print i
-        shocks = scipy.randn(1,M)
-        #print shocks
-        shocks = shocks*v*numpy.sqrt(delta_t)+r*delta_t
-        values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
-        #print numpy.var(shocks)
-        
-    relevant_values = values[:,1:-1]
-    #print values.size
-    #print relevant_values.shape
-    relevant_values = numpy.mean(relevant_values,axis=1)
-    payoff = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values]
-    #numpy.mean(relevant_values-k)
-        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
-    return numpy.mean(payoff)
-    
-    
-def computeAsianCV(k=99.0, s0=100.0, r=0.06, v=0.2, T=1, M=50000, N = 10):
-    delta_t = (T+0.0)/N
-    time_steps = N
-    
-    values = numpy.zeros((M,time_steps+1))
-    values[:,0] = s0;
-    for i in xrange(1,int(time_steps+1)):
-        #print i
-        shocks = scipy.randn(1,M)
-        shocks = shocks*v*numpy.sqrt(delta_t)+r*delta_t
-        values[:,i] = (numpy.multiply(shocks,values[:,i-1])+values[:,i-1])
-        #print numpy.var(shocks)
-        
-    relevant_values = values[:,1:]
-    relevant_values_CA = numpy.mean(relevant_values,axis=1)
-    relevant_values_CB = scipy.stats.gmean(relevant_values, axis=1)
-    
-    #test_N = N*(T+0.0)/365
-    weird_sig = T*pow(v,2)*(N+1)*(2*N+1)/(6*pow(N,2))
-    weird_mean = T*(r - pow(v,2)/2)*(N+1)/(2*N)
-    
-    d1 = (numpy.log(s0/k)+weird_mean)/(weird_sig)
-    d2 = d1 - weird_sig
-    stock = s0*scipy.stats.norm.cdf(d1)
-    opt = k * numpy.exp(-r*T)*scipy.stats.norm.cdf(d2)
-    payoff_CA = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values_CA]
-    payoff_CB = [max(x-k,0)*numpy.exp(-r*T) for x in relevant_values_CB]
+	for mi in m:
+		results1 = []
+		results2 = []
+		results3 = []
+		for i in xrange(0,int(total_M/mi)):
+			results1.append(varianceAntithetic(M=int(mi/2))[1])
+			results3.append(varianceAntithetic(M=int(mi/2), meanPayoff = False)[1])
+			results2.append(computeMCValuation(M=int(mi))[1])
+		Y.append(np.mean(results1))
+		Y2.append(np.mean(results2))
+		Y3.append(np.mean(results3))
+		X.append(mi)
 
-        
-    beta = numpy.corrcoef(payoff_CA,payoff_CB)[0,1]*numpy.sqrt(numpy.var(payoff_CA))/numpy.sqrt(numpy.var(payoff_CB))
-    out = numpy.mean(payoff_CA) - beta*(numpy.mean(payoff_CB) - (stock-opt))
-    return numpy.mean(payoff_CA), out, numpy.mean(payoff_CB), stock-opt
-    
-    
-def plotCVthing():
-    shocks = numpy.linspace(500,50000,25)
-    
-    X = []
-    Y = []
-    Y2 = []
-    err = []
-    err2 = []
-    for x in shocks:
-        a = 0
-        Ya = []
-        Yb = []
-        while(a < 10):
-            out = computeAsianCV(M=x,N=15)
-            Ya.append(out[0])
-            Yb.append(out[1])
-            a = a+1
-        
-        X.append(x)
-        Y.append(numpy.mean(Ya))
-        Y2.append(numpy.mean(Yb))
-        err.append(numpy.sqrt(numpy.var(Ya)))        #= numpy.multiply(shocks,values[:,i-1])+values[:,i-1]
-        err2.append(numpy.sqrt(numpy.var(Yb)))
-        
-    #plt.plot(X,err,label='Vanilla')
-    #plt.plot(X,err2,label='Control Variate')
-    plt.errorbar(X,Y,yerr=err)
-    plt.errorbar(X,Y2,yerr=err2)
-    plt.legend()
-    plt.show()
-    print err2
-    
-def plotAsian():
-    print 5
+	plt.plot(X,Y,label='Antithetic Payoffmean')
+	plt.plot(X,Y,label='Antithetic Stockmean')
+	plt.plot(X,Y2,label='Vanilla')
+	plt.legend()
+	plt.show()
+
+def plotStandardError(maxM=50000):
+	X = []
+	Y = []
+	for M in xrange(10, maxM, 100):
+		X.append(M)
+		std_error = computeMCValuation(M=M)[1]
+		Y.append(std_error)
+
+	plt.plot(X, Y)
+	plt.legend()
+	plt.show()
+
+def plotConvergence(maxM=50000):
+	X = []
+	Y = []
+	for M in xrange(10, maxM, 100):
+		X.append(M)
+		value = computeMCValuation(M=M)[0]
+		Y.append(value)
+
+	plt.plot(X, [BS()[0] for x in X], label="Black-Scholes")
+	plt.plot(X, Y)
+	plt.xlabel('M')
+	plt.ylabel('price')
+	plt.legend()
+	plt.show()
+
+def plotPriceVSVolatility():
+	X = []
+	Y = []
+	Y2 = []
+	vold1 = np.linspace(0.01, 0.9, 30)
+	for v in vold1:
+		X.append(v * 100)
+		c = computeMCValuation(v=v)[0]
+		Y.append(c)
+		s = BS(vd1=v, vd2=v)[0]
+		Y2.append(s)
+
+	plt.plot(X, Y, label="Monte Carlo")
+	plt.plot(X, Y2, label="Black-Scholes")
+	# plt.plot(X, Y3, label="american")
+	plt.xlabel('volatility in %')
+	plt.ylabel('call option price in euro')
+	plt.legend(loc=2)
+
+	plt.show()
+
+
+def priceVSStrike():
+	P = []
+	C = []
+	X = []
+	for k in xrange(50,150, 5):
+		X.append(k)
+		P.append(getPrice(type="put",k=k))
+		C.append(getPrice(type="call",k=k))
+	plt.plot(X, P, label="put")
+	plt.plot(X, C, label="call")
+	plt.xlabel('strike')
+	plt.ylabel('option price')
+	plt.legend()
+	plt.show()
+
+def deltaVSEpsilonM():
+
+	for m in [pow(10,4), pow(10,5)]:
+		s = ""
+		for e in [0.01, 0.02, 0.5]:
+			error = np.round(abs(1 - (BS()[1] / computeDelta(M=m, bump=e, sameSeed=True)))*100,2)
+			s += str(error) + "\% & "
+
+		print s + "\n"
+
+def plotDelta(maxM = 100000):
+	X = []
+	Y = []
+	for M in xrange(1000, maxM, 2000):
+		X.append(M)
+		delta = computeDelta(M=M)
+		Y.append(delta)
+	plt.plot(X, Y)
+	plt.xlabel('M')
+	plt.ylabel('delta')
+	plt.show()
+
+
+def deltaUncertainty(approx_type="bump", M=50000, **kwargs):
+	n = 300
+	X = np.empty((n,1))
+	for i in xrange(0, n):
+		if approx_type == 'bump':
+			delta = computeDelta(M=M, **kwargs)
+		elif approx_type == 'smooth':
+			delta = computeDeltaApprox(M=M, **kwargs)
+		elif approx_type == 'likelihood':
+			delta = computeDeltaLikelihood(M=M)
+
+		X[i] = delta
+	print np.mean(X)
+	print np.sqrt(np.var(X))
+
+# deltaUncertainty(approx_type='smooth')
+# print computeMCValuation(type="put")
+# plotAntitheticShit()
+# priceVSStrike()
+# print computeDelta(M=200000)
+# print BS()[1]
+# print computeDelta(sameSeed=False)
+# deltaVSEpsilonM()
+# plotDelta()
+# plotStandardError()
+# plotConvergence()
+plotPriceVSVolatility()
