@@ -7,12 +7,10 @@ Created on Fri Mar  7 11:25:55 2014
 import matplotlib.pyplot as plt
 import numpy
 import pprint
+import inspect
 
-def FD(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, type='ftcs'):
+def FD(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1 = -10.0, M2 = 10.0, type='ftcs'):
 	V = numpy.zeros((I+2,N+1))
-	M1 = -10.0
-	M2 = 10.0
-
 	V[:-1,0] = numpy.linspace(M1, M2, I+1)
 
 	int_incrs = (M2 - M1) / I
@@ -70,5 +68,18 @@ def FD(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, type='ftcs'):
 		V[0:I ,n+1] = numpy.dot(Abar,c).T
 
 	return V
+V = FD()
 
-M = FD(type='cn')
+def plotDelta():
+	args = inspect.getargspec(FD)
+	N = args.defaults[args.args.index('N')]
+	I = args.defaults[args.args.index('I')]
+	M1 = args.defaults[args.args.index('M1')]
+	M2 = args.defaults[args.args.index('M2')]
+	V = FD(type='cn')[:,N]
+	print (M2 - M1) / I
+	print (M2 - M1)/(I+1)
+	M = numpy.gradient(V, (M2 - M1)/(I+1))
+	return M
+
+M = plotDelta()
