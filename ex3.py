@@ -17,7 +17,7 @@ def FTCS(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0):
  
     int_incrs = (M2 - M1) / I
      
-    delta_x = 0.2
+    delta_x = V[2,0] - V[1,0]
     delta_t = -T/N
 
     for n in xrange(0,N):
