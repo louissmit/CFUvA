@@ -2,16 +2,16 @@ from scipy.stats import norm
 import numpy as np
 import matplotlib.pyplot as plt
 
-def BS(k=99.0, s0=100.0, r = 0.06, v=0.2, T=1, type='call'):
+def BS(k=99.0, s0=100.0, r = 0.06, v=0.2, T=1, option_type='call'):
 	# d1 = (np.log(s0/k)+(r+pow(vd1,2))*T)/(vd1*np.sqrt(T))
 	d1 = (np.log(s0/k)+(r+0.5*pow(v,2))*T)/(v*np.sqrt(T))
 	d2 = d1 - v/np.sqrt(T)
 	stock = s0*norm.cdf(d1)
 	opt = k * np.exp(-r*T)*norm.cdf(d2)
 	opt_price = 0
-	if type == 'call':
+	if option_type == 'call':
 		opt_price = stock - opt
-	elif type == 'digital':
+	elif option_type == 'digital':
 		opt_price = np.exp(-r*T)*norm.cdf(d2)
 	else:
 		raise TypeError("not a valid option type")

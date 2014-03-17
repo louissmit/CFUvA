@@ -86,7 +86,7 @@ def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0,
 	return V, s0s
 
 
-V = FD(type='ftcs')
+# V = FD(type='ftcs')
 
 def plotDelta(**kwargs):
 	args = inspect.getargspec(FD)
@@ -95,25 +95,33 @@ def plotDelta(**kwargs):
 	I = args.defaults[args.args.index('I')]
 	M1 = args.defaults[args.args.index('M1')]
 	M2 = args.defaults[args.args.index('M2')]
-	VN = FD(**kwargs)[0][:,N]
+	kwargs['type'] = 'ftcs'
+	V_ftcs = FD(**kwargs)[0][:,N]
+	kwargs['type'] = 'cn'
+	V_crank = FD(**kwargs)[0][:,N]
 
 	l = numpy.log(s0)
 	# M = numpy.gradient(VN, (M2 - M1)/(I+1))
 	log_range = numpy.linspace(l+M1, l+M2, I+1)
 
 	M = []
-	for i in xrange(1, len(VN)-1):
-		delta = (VN[i] - VN[i-1]) / (numpy.exp(log_range[i]) - numpy.exp(log_range[i-1]))
+	C = []
+	for i in xrange(1, len(V_ftcs)-1):
+		delta = (V_ftcs[i] - V_ftcs[i-1]) / (numpy.exp(log_range[i]) - numpy.exp(log_range[i-1]))
+		delta_crank = (V_crank[i] - V_crank[i-1]) / (numpy.exp(log_range[i]) - numpy.exp(log_range[i-1]))
 		M.append(delta)
+		C.append(delta_crank)
 
 	B = []
 	S = []
+	kwargs.pop('type')
 	for i in xrange(1,len(log_range)-1):
 		s = (numpy.exp(log_range[i]) + numpy.exp(log_range[i-1])) / 2
 		kwargs['s0'] = s
 		S.append(s)
 		B.append(BS(**kwargs)[1])
 
+	plt.plot(S, C, label="Crank-Nicholson")
 	plt.plot(S, M, label="FTCS")
 	plt.plot(S, B, label="Black-Scholes")
 	plt.xlabel("$S_0$")
@@ -121,7 +129,27 @@ def plotDelta(**kwargs):
 	plt.legend(loc=4)
 	plt.show()
 
-	return M, B, VN
+	return M, B, V_ftcs
 
 M, B, VN = plotDelta(k=110.0, s0=110.0, v=0.3, r=0.04)
 
+
+def getError(N1=1000,I1=1000):
+	mat,s = FD(N=N1, I=I1, type='cn')
+	x = [BS(s0=s0)[0] for s0 in s]
+
+	s = s[0:-1]
+	x = x[0:-1]
+
+	y = mat[0:-1,-1]
+
+	print len(x)
+	print len(y)
+	print len(s)
+
+	plt.plot(s,x,color='blue')
+	plt.plot(s,y,color='red')
+
+
+# M,s = FD(type='cn')
+# getError()
