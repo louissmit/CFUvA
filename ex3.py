@@ -39,8 +39,12 @@ def FD(I=100,N=50, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, type='ftcs'):
 	A = numpy.zeros((I, I))
 	#FTCS:
 	for i in xrange(0,I):
-		A[i,i]=1
+		A[i,i]=a0
+		if i < I-1:
+			A[i+1,i]=a1
+			A[i,i+1]=a_1
 	Abar = numpy.linalg.inv(A)
+
 
 
 	if type == 'ftcs':
