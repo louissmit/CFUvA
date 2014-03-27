@@ -9,6 +9,9 @@ import numpy
 import pprint
 import inspect
 from blackscholes import BS
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib import colors
 
 def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0, type='ftcs'):
 	V = numpy.zeros((I+1,N+1))
@@ -54,9 +57,6 @@ def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0,
 
 	Abar = numpy.linalg.inv(A)
 
-
-
-
 	if type == 'ftcs':
 		b1 = (alpha + beta)
 		b0 = (1-2*beta-gamma)
@@ -89,7 +89,7 @@ def FD(I=100,N=500, r=0.06, v=0.2, s0 = 100.0, k = 99.0, T=1.0, M1=-2.0, M2=2.0,
 	return V, s0s
 
 
-# V = FD(type='ftcs')
+#V, s = FD(type='ftcs')
 
 def plotDelta(**kwargs):
 	args = inspect.getargspec(FD)
@@ -134,32 +134,40 @@ def plotDelta(**kwargs):
 
 	return M, B, V_ftcs
 
-M, B, VN = plotDelta(k=110.0, s0=110.0, v=0.3, r=0.04)
+# M, B, VN = plotDelta(k=110.0, s0=110.0, v=0.3, r=0.04)
 
 
-def plotV(N1=100,I1=100):
-	mat,s = FD(N=N1, I=I1, type='ftcs')
+def plotV(N1=1000,I1=100):
+	mat,s = FD(N=N1, I=I1, type='cn', k=110.0, s0=110.0, v=0.3, r=0.04)
 	cn_mat,s = FD(N=N1, I=I1, type='cn')
 	x = [BS(s0=s0)[0] for s0 in s]
 
-	s = s[0:-1]
-	x = x[0:-1]
+	# s = s[0:-1]
+	# x = x[0:-1]
 
-	y = mat[0:-1,-1]
-	y_cn = cn_mat[0:-1,-1]
+	# y = mat[0:-1,-1]
+	# y_cn = cn_mat[0:-1,-1]
 
-	print len(x)
-	print len(y)
-	print len(s)
 
-	plt.plot(s,x,color='blue', label="Black-Scholes")
-	plt.plot(s,y,color='green', label="FTCS")
-	plt.plot(s,y_cn,color='red', label="Crank-Nicholson")
-	plt.xlabel("$S_0$")
-	plt.ylabel("$V$")
-	plt.legend(loc=4)
+	n = numpy.linspace(0, N1+1, N1+1)
+	fig = plt.figure()
+	ax = fig.add_subplot(111, projection='3d')
+	X, Y = numpy.meshgrid(n,s[0:60])
+	print numpy.shape(X),numpy.shape(Y),numpy.shape(mat)
+
+	norm = colors.Normalize(vmin = 0, vmax = 50, clip = True)
+	ax.plot_surface(X,Y, mat[0:60,:], cmap=cm.coolwarm, norm=norm)
+	ax.set_xlabel("$n$")
+	ax.set_ylabel("$S_o$")
+	ax.set_zlabel("$V$")
+
+	# plt.plot(s,x,color='blue', label="Black-Scholes")
+	# plt.plot(s,y,color='green', label="FTCS")
+	# plt.plot(s,y_cn,color='red', label="Crank-Nicholson")
+	# plt.xlabel("$S_0$")
+	# plt.ylabel("$V$")
+	# plt.legend(loc=4)
 	plt.show()
-
 
 # M,s = FD()
 plotV()
