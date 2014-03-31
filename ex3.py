@@ -170,4 +170,4 @@ def plotV(N1=1000,I1=100):
 	plt.show()
 
 # M,s = FD()
-plotV()
+# plotV()
